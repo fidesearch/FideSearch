@@ -12,6 +12,8 @@ from bs4 import BeautifulSoup
 from ddgs import DDGS
 from deep_translator import GoogleTranslator
 
+SERPER_API_KEY = "d8a7cd232b15c5bad649a108d8d7874c921f683b"
+
 
 PATRONES_SENSACIONALISTAS = (
     "no quieren que sepas",
@@ -115,10 +117,10 @@ def es_recomendado_para_perfil(categoria: str, dominio: str, perfil: str) -> boo
 
 
 def buscar_en_web(
-    consulta: str,
-    num_resultados: int = 10,
-    region: str = "wt-wt",
-    idioma: str = "es",
+        consulta: str,
+        num_resultados: int = 10,
+        region: str = "wt-wt",
+        idioma: str = "es",
 ) -> list[dict]:
     clave_cache = (consulta.lower().strip(), num_resultados, region, idioma)
     ahora = time.time()
@@ -128,51 +130,72 @@ def buscar_en_web(
             if ahora - ts < _CACHE_TTL:
                 return [dict(item) for item in datos_guardados]
 
-    mapa_region = {
-        "es": "es-es", "en": "us-en", "ca": "es-es", "gl": "es-es",
-        "eu": "es-es", "fr": "fr-fr", "pt": "pt-pt", "de": "de-de", "it": "it-it",
+    mapa_gl = {
+        "es": "es", "en": "us", "ca": "es", "gl": "es",
+        "eu": "es", "fr": "fr", "pt": "pt", "de": "de", "it": "it",
     }
-    region_respaldo = mapa_region.get(idioma, "us-en")
-    region_efectiva = region_respaldo if region.endswith("-wt") else region
-
-    intentos = [
-        (region_efectiva, "yahoo"),
-        (region_efectiva, "google"),
-        (region_efectiva, "auto"),
-        (region_efectiva, "bing"),
-        (region_efectiva, "duckduckgo"),
-    ]
-
-    resultados = []
-    for reg, bk in intentos:
-        try:
-            with DDGS(timeout=3) as ddgs:
-                res = ddgs.text(consulta, region=reg, max_results=num_resultados, backend=bk)
-                if res:
-                    resultados = res
-                    break
-        except Exception:
-            continue
+    gl_pais = mapa_gl.get(idioma, "es") if region.endswith("-wt") else region.split("-")[0]
 
     resultados_limpios = []
-    for r in (resultados or []):
-        url = r.get("href", "")
-        if url:
-            resultados_limpios.append({
-                "titulo": r.get("title", "Sin título"),
-                "url": url,
-                "resumen": r.get("body", ""),
-                "dominio": extraer_dominio(url),
-            })
+
+    if SERPER_API_KEY and SERPER_API_KEY != "d8a7cd232b15c5bad649a108d8d7874c921f683b":
+        try:
+            resp = requests.post(
+                "https://google.serper.dev/search",
+                headers={
+                    "X-API-KEY": SERPER_API_KEY,
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "q": consulta,
+                    "num": num_resultados,
+                    "gl": gl_pais,
+                    "hl": idioma,
+                },
+                timeout=3.0,
+            )
+            if resp.status_code == 200:
+                data = resp.json()
+                for item in data,get("organic", [])[:num_resultados]:
+                    url = item.get("link", "")
+                    if url:
+                        resultados_limpios.append({
+                            "titulo": item.get("title", "Sin título"),
+                            "url": url,
+                            "resumen": item.get("snippet", ""),
+                            "dominio": extraer_dominio(url),
+                        })
+        except Exception:
+            resultados_limpios = []
+
+    if not resultados_limpios:
+        try:
+            with DDGS(timeout=2.5) as ddgs:
+                res = ddgs.text(
+                    consulta,
+                    region=f"{gl_pais}-{idioma}",
+                    max_results=num_resultados,
+                    backend="yahoo",
+                )
+                for r in (res or []):
+                    url = r.get("href", "")
+                    if url:
+                        resultados_limpios.append({
+                            "titulo": r.get("title", "Sin título"),
+                            "url": url,
+                            "resumen": r.get("body", ""),
+                            "dominio": extraer_dominio(url),
+                        })
+        except Exception:
+            pass
 
     if resultados_limpios:
         with _CACHE_LOCK:
             if len(_CACHE_BUSQUEDAS) >= 40:
                 _CACHE_BUSQUEDAS.clear()
-            _CACHE_BUSQUEDAS[clave_cache] = (ahora, [dict(item) for item in resultados_limpios])
+                _CACHE_BUSQUEDAS[clave_cache] = (ahora, [dict(item) for item in resultados_limpios])
 
     return resultados_limpios
-
 
 def extraer_datos_web(url: str, dominio_propio: str) -> dict:
     """Descarga máx. 450 KB con timeout estricto y extrae texto + metadatos CRAAP."""
