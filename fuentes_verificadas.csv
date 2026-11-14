@@ -1,0 +1,112 @@
+dominio,categoria
+who.int,Organismo Internacional
+paho.org,Salud Internacional
+un.org,Organismo Internacional
+unesco.org,Organismo Internacional
+unicef.org,Organismo Internacional
+fao.org,Organismo Internacional
+oecd.org,Economía y Datos
+worldbank.org,Economía y Datos
+imf.org,Economía y Datos
+europa.eu,Institucional (UE)
+esa.int,Ciencia y Espacio
+nasa.gov,Ciencia y Espacio
+cern.ch,Ciencia y Física
+ipcc.ch,Ciencia y Clima
+cdc.gov,Salud Pública
+nih.gov,Salud y Ciencia
+mayoclinic.org,Salud y Medicina
+cochrane.org,Medicina Basada en Evidencia
+msdmanuals.com,Referencia Médica
+csic.es,Ciencia
+agenciasinc.es,Divulgación Científica
+nature.com,Revista Científica
+science.org,Revista Científica
+thelancet.com,Revista Médica
+nejm.org,Revista Médica
+bmj.com,Revista Médica
+sciencedirect.com,Base Científica
+springer.com,Editorial Científica
+arxiv.org,Repositorio Científico
+scholar.google.com,Académico
+nationalgeographic.com,Divulgación
+ieee.org,Ingeniería y Tecnología
+acm.org,Informática y Ciencia
+w3.org,Estándares Web
+ietf.org,Estándares Internet
+mozilla.org,Documentación Técnica
+usb.org,Estándares Hardware
+iso.org,Estándares Internacionales
+python.org,Documentación Técnica
+incibe.es,Ciberseguridad
+boe.es,Institucional
+ine.es,Datos Oficiales
+bde.es,Datos Económicos
+aemet.es,Ciencia y Meteorología
+congreso.es,Institucional
+senado.es,Institucional
+poderjudicial.es,Institucional
+aepd.es,Institucional
+comunidad.madrid,Institucional Regional
+juntadeandalucia.es,Institucional Regional
+gva.es,Institucional Regional
+gencat.cat,Institucional (Cataluña)
+3cat.cat,Prensa Pública (Cataluña)
+idescat.cat,Datos Oficiales (Cataluña)
+enciclopedia.cat,Enciclopedia (Catalán)
+xunta.gal,Institucional (Galicia)
+crtvg.gal,Prensa Pública (Galicia)
+academia.gal,Referencia Lingüística (Gallego)
+euskadi.eus,Institucional (País Vasco)
+eitb.eus,Prensa Pública (País Vasco)
+euskaltzaindia.eus,Referencia Lingüística (Euskera)
+rae.es,Referencia Lingüística
+cervantes.es,Cultura y Educación
+britannica.com,Enciclopedia
+wikipedia.org,Enciclopedia Colaborativa
+wikidata.org,Base de Conocimiento
+khanacademy.org,Educación
+openstax.org,Libros Académicos
+unam.mx,Universidad Internacional
+uba.ar,Universidad Internacional
+ub.edu,Universidad
+upc.edu,Universidad
+ethz.ch,Universidad Internacional
+maldita.es,Verificación (IFCN)
+newtral.es,Verificación (IFCN)
+verificat.cat,Verificación (IFCN)
+chequeado.com,Verificación (IFCN)
+colombiacheck.com,Verificación (IFCN)
+animalpolitico.com,Verificación (IFCN)
+aosfatos.org,Verificación (IFCN)
+snopes.com,Verificación (IFCN)
+factcheck.org,Verificación (IFCN)
+politifact.com,Verificación (IFCN)
+fullfact.org,Verificación (IFCN)
+correctiv.org,Verificación (IFCN)
+pagellapolitica.it,Verificación (IFCN)
+facta.news,Verificación (IFCN)
+reuters.com,Agencia de Noticias
+apnews.com,Agencia de Noticias
+efe.com,Agencia de Noticias
+afp.com,Agencia de Noticias
+bbc.com,Prensa Internacional
+bbc.co.uk,Prensa Internacional
+dw.com,Prensa Internacional
+france24.com,Prensa Internacional
+euronews.com,Prensa Internacional
+swissinfo.ch,Prensa Internacional
+rtve.es,Prensa Pública
+pbs.org,Prensa Pública (EE. UU.)
+npr.org,Prensa Pública (EE. UU.)
+cbc.ca,Prensa Pública (Canadá)
+abc.net.au,Prensa Pública (Australia)
+nhk.or.jp,Prensa Pública (Japón)
+gov.uk,Institucional (Reino Unido)
+lemonde.fr,Prensa Internacional
+franceinfo.fr,Prensa Pública (Francia)
+zeit.de,Prensa Internacional
+tagesschau.de,Prensa Pública (Alemania)
+publico.pt,Prensa Internacional
+rtp.pt,Prensa Pública (Portugal)
+ansa.it,Agencia de Noticias (Italia)

@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+pandas
+scikit-learn
+joblib
+ddgs
+requests
+trafilatura
+beautifulsoup4
+deep-translator

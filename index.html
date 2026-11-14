@@ -1,0 +1,1581 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FideSearch — Buscador fiable con IA</title>
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg?v=2" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #fafafa;
+      --surface: #ffffff;
+      --surface-soft: #f3f4f6;
+      --text: #111827;
+      --text-muted: #6b7280;
+      --border: #e5e7eb;
+      --accent: #2563eb;
+      --accent-hover: #1d4ed8;
+      --link: #1a4fd6;
+      --verified-bg: #ecfdf5;
+      --verified-text: #047857;
+      --ai-bg: #eff6ff;
+      --ai-text: #1d4ed8;
+      --personal-bg: #f5f3ff;
+      --personal-text: #6d28d9;
+      --filtered-bg: #fef2f2;
+      --filtered-text: #b91c1c;
+      --profile-bg: #fffbeb;
+      --profile-text: #b45309;
+      --shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    }
+
+    [data-theme="dark"] {
+      --bg: #0b0f17;
+      --surface: #131924;
+      --surface-soft: #1c2433;
+      --text: #f3f4f6;
+      --text-muted: #9ca3af;
+      --border: #263042;
+      --accent: #3b82f6;
+      --accent-hover: #60a5fa;
+      --link: #7aa7ff;
+      --verified-bg: rgba(16, 185, 129, 0.14);
+      --verified-text: #34d399;
+      --ai-bg: rgba(59, 130, 246, 0.15);
+      --ai-text: #60a5fa;
+      --personal-bg: rgba(139, 92, 246, 0.18);
+      --personal-text: #c4b5fd;
+      --filtered-bg: rgba(239, 68, 68, 0.15);
+      --filtered-text: #f87171;
+      --profile-bg: rgba(245, 158, 11, 0.15);
+      --profile-text: #fbbf24;
+      --shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      transition: background-color 0.2s, color 0.2s;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 14px 24px;
+    }
+
+    .topbar-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .pill-btn, .lang-select {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 7px 14px;
+      font-size: 0.84rem;
+      font-weight: 500;
+      font-family: inherit;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: border-color 0.2s, transform 0.1s;
+    }
+    .pill-btn:hover, .lang-select:hover { border-color: var(--accent); }
+    .pill-btn.primary {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+    .pill-btn.primary:hover { background: var(--accent-hover); }
+
+    .container {
+      width: 100%;
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 0 20px 40px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .container.landing {
+      justify-content: center;
+      padding-bottom: 12vh;
+    }
+
+    .brand { text-align: center; margin-bottom: 24px; }
+    .container:not(.landing) .brand {
+      text-align: left;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .logo-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+    }
+
+    .logo {
+      font-size: 3.1rem;
+      font-weight: 800;
+      letter-spacing: -1.5px;
+      background: linear-gradient(135deg, #2563eb 0%, #10b981 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .container:not(.landing) .logo { font-size: 1.75rem; letter-spacing: -0.8px; }
+
+    .tagline { color: var(--text-muted); font-size: 0.96rem; margin-top: 6px; }
+    .container:not(.landing) .tagline { font-size: 0.84rem; margin-top: 0; }
+
+    .search-box {
+      display: flex;
+      align-items: center;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 6px 6px 6px 20px;
+      box-shadow: var(--shadow);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .search-box:focus-within {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14);
+    }
+    .search-box input {
+      flex: 1;
+      border: none;
+      outline: none;
+      background: transparent;
+      color: var(--text);
+      font-size: 1rem;
+      font-family: inherit;
+      min-width: 0;
+    }
+    .search-btn {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 999px;
+      padding: 11px 22px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+    }
+    .search-btn:hover { background: var(--accent-hover); }
+    .search-btn:disabled { opacity: 0.6; cursor: wait; }
+
+    .suggestions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 18px;
+    }
+    .container:not(.landing) .suggestions { display: none; }
+
+    .chip {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .chip:hover { color: var(--text); border-color: var(--accent); }
+
+    .settings-panel {
+      display: none;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px 20px;
+      margin-top: 14px;
+      box-shadow: var(--shadow);
+    }
+    .settings-panel.open {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+    }
+    .setting-item label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+    .setting-item select, .setting-item input[type="range"] { width: 100%; font-family: inherit; }
+    .setting-item select {
+      background: var(--surface-soft);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: 0.85rem;
+    }
+
+    .loader {
+      display: none;
+      text-align: center;
+      padding: 40px 0;
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+    .loader.active { display: block; }
+    .spinner {
+      width: 30px;
+      height: 30px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 12px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Síntesis verificada */
+    .synthesis-box {
+      background: var(--surface);
+      border: 1px solid rgba(37, 99, 235, 0.35);
+      border-left: 4px solid var(--accent);
+      border-radius: 14px;
+      padding: 16px 20px;
+      margin: 18px 0 14px;
+      box-shadow: var(--shadow);
+    }
+    .synthesis-title {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .synthesis-item {
+      font-size: 0.92rem;
+      line-height: 1.55;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+    .synthesis-item:last-child { margin-bottom: 0; }
+    .cite-pill {
+      display: inline-block;
+      background: var(--ai-bg);
+      color: var(--ai-text);
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 1px 7px;
+      border-radius: 999px;
+      text-decoration: none;
+      margin-left: 4px;
+    }
+    .cite-pill:hover { text-decoration: underline; }
+
+    /* Tabs de filtro rápido y estadísticas */
+    .stats-bar {
+      font-size: 0.84rem;
+      color: var(--text-muted);
+      margin: 16px 0 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+    .filter-tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .tab-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 6px 13px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+    }
+    .tab-btn.active {
+      background: var(--text);
+      color: var(--bg);
+      border-color: var(--text);
+    }
+
+    /* Tarjetas */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px 20px;
+      margin-bottom: 12px;
+      transition: border-color 0.15s;
+    }
+    .card:hover { border-color: rgba(37, 99, 235, 0.45); }
+
+    .card-domain {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 5px;
+    }
+    .card-domain img { width: 16px; height: 16px; border-radius: 3px; }
+
+    .card-title a {
+      font-size: 1.07rem;
+      font-weight: 600;
+      color: var(--link);
+      text-decoration: none;
+      line-height: 1.35;
+    }
+    .card-title a:hover { text-decoration: underline; }
+
+    .card-snippet {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-top: 7px;
+      line-height: 1.5;
+    }
+
+    .card-footer {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .badges-wrap { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 999px;
+    }
+    .badge.verified { background: var(--verified-bg); color: var(--verified-text); }
+    .badge.ai { background: var(--ai-bg); color: var(--ai-text); }
+    .badge.personal { background: var(--personal-bg); color: var(--personal-text); }
+    .badge.profile { background: var(--profile-bg); color: var(--profile-text); }
+    .badge.filtered { background: var(--filtered-bg); color: var(--filtered-text); }
+
+    .xai-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 0.75rem;
+      font-family: inherit;
+      cursor: pointer;
+    }
+    .xai-btn:hover { color: var(--text); border-color: var(--accent); }
+
+    .xai-box {
+      display: none;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px dashed var(--border);
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    .xai-box.open { display: block; }
+    .xai-signals {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .xai-sig {
+      background: var(--surface-soft);
+      padding: 3px 9px;
+      border-radius: 6px;
+      font-size: 0.76rem;
+    }
+    .xai-kw {
+      display: inline-block;
+      background: var(--ai-bg);
+      color: var(--ai-text);
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 0.74rem;
+      margin: 2px 4px 2px 0;
+    }
+
+    .transparency-box {
+      margin-top: 22px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--surface);
+      overflow: hidden;
+    }
+    .transparency-toggle {
+      width: 100%;
+      background: transparent;
+      border: none;
+      color: var(--text);
+      padding: 14px 18px;
+      font-family: inherit;
+      font-size: 0.88rem;
+      font-weight: 600;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .transparency-list {
+      display: none;
+      padding: 0 18px 16px;
+      border-top: 1px solid var(--border);
+    }
+    .transparency-list.open { display: block; }
+    .transparency-note { font-size: 0.8rem; color: var(--text-muted); margin: 12px 0; }
+
+    .empty-msg {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.94rem;
+    }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 14px 24px;
+      display: flex;
+      justify-content: center;
+      gap: 18px;
+      flex-wrap: wrap;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    footer button {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-family: inherit;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+    footer button:hover { color: var(--accent); text-decoration: underline; }
+
+    /* Modales */
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.52);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .modal-backdrop.open { display: flex; }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      width: 100%;
+      max-width: 520px;
+      max-height: 88vh;
+      overflow-y: auto;
+      padding: 24px;
+      box-shadow: var(--shadow);
+      position: relative;
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .modal-header h2 { font-size: 1.2rem; }
+    .close-modal {
+      background: var(--surface-soft);
+      border: none;
+      color: var(--text);
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+
+    .form-group { margin-bottom: 14px; }
+    .form-group label { display: block; font-size: 0.82rem; font-weight: 600; margin-bottom: 6px; color: var(--text-muted); }
+    .form-group input {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--surface-soft);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.92rem;
+    }
+    .form-error { color: var(--filtered-text); font-size: 0.82rem; margin-bottom: 10px; }
+
+    /* Opciones de la entrevista */
+    .quiz-progress {
+      height: 5px;
+      background: var(--surface-soft);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+    .quiz-progress-bar {
+      height: 100%;
+      background: var(--accent);
+      transition: width 0.25s;
+    }
+    .option-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin: 12px 0 18px;
+    }
+    .option-card {
+      background: var(--surface-soft);
+      border: 2px solid transparent;
+      border-radius: 12px;
+      padding: 12px;
+      cursor: pointer;
+      text-align: left;
+      font-family: inherit;
+      color: var(--text);
+      transition: all 0.15s;
+    }
+    .option-card strong { display: block; font-size: 0.9rem; margin-bottom: 3px; }
+    .option-card span { font-size: 0.77rem; color: var(--text-muted); }
+    .option-card.selected {
+      border-color: var(--accent);
+      background: var(--ai-bg);
+    }
+
+    .domain-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 10px;
+      background: var(--surface-soft);
+      border-radius: 8px;
+      margin-bottom: 6px;
+      font-size: 0.84rem;
+    }
+    .del-btn {
+      background: none;
+      border: none;
+      color: var(--filtered-text);
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .logo-img{
+        width: 400px;
+        max-width: 90vw;
+        height: auto;
+        max-height: 140px;
+        object-fit: contain;
+        display: block;
+    }
+    .container:not(.landing) .logo-img{
+        width: 190px;
+        max-height: 55px;
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-group" id="authArea">
+      <button class="pill-btn primary" id="btnOpenAuth" type="button">👤 Iniciar sesión / Personalizar</button>
+    </div>
+    <div class="topbar-group">
+      <select class="lang-select" id="langSelect" aria-label="Idioma">
+        <option value="es">🌐 Español</option>
+        <option value="en">🌐 English</option>
+        <option value="ca">🌐 Català</option>
+        <option value="gl">🌐 Galego</option>
+        <option value="eu">🌐 Euskara</option>
+        <option value="fr">🌐 Français</option>
+        <option value="pt">🌐 Português</option>
+        <option value="de">🌐 Deutsch</option>
+        <option value="it">🌐 Italiano</option>
+      </select>
+      <button class="pill-btn" id="btnSettings" type="button">⚙️ Filtros</button>
+      <button class="pill-btn" id="btnTheme" type="button">🌙 Oscuro</button>
+    </div>
+  </div>
+
+  <main class="container landing" id="mainContainer">
+    <div class="brand">
+      <div class="logo-wrap" id="logoBtn">
+        <img src="/static/logo.svg" alt="FideSearch" class="logo-img" />
+      </div>
+      <div class="tagline" id="taglineText">Motor de búsqueda filtrado por fuentes verificadas e IA</div>
+    </div>
+
+    <form class="search-box" id="searchForm">
+      <input type="text" id="queryInput" placeholder="Busca un tema con fuentes fiables..." autocomplete="off" />
+      <button class="search-btn" id="searchBtn" type="submit">Buscar</button>
+    </form>
+
+    <div class="suggestions" id="suggestionsBox"></div>
+
+    <div class="settings-panel" id="settingsPanel">
+      <div class="setting-item">
+        <label for="umbralRange"><span id="umbralTitle">Exigencia mínima IA:</span> <span id="umbralVal">55%</span></label>
+        <input type="range" id="umbralRange" min="45" max="85" step="5" value="55" />
+      </div>
+      <div class="setting-item">
+        <label for="numRange"><span id="numTitle">Webs a analizar:</span> <span id="numVal">10</span></label>
+        <input type="range" id="numRange" min="5" max="15" step="1" value="10" />
+      </div>
+      <div class="setting-item">
+        <label for="regionSelect" id="regionLabel">Región de búsqueda</label>
+        <select id="regionSelect">
+          <option value="wt-wt" selected>Todo el mundo</option>
+          <option value="es-es">España</option>
+          <option value="us-en">EE. UU. / Global EN</option>
+          <option value="uk-en">Reino Unido</option>
+          <option value="mx-es">México</option>
+          <option value="ar-es">Argentina</option>
+          <option value="fr-fr">Francia</option>
+          <option value="pt-pt">Portugal / Brasil</option>
+          <option value="de-de">Alemania</option>
+          <option value="it-it">Italia</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="loader" id="loader">
+      <div class="spinner"></div>
+      <span id="loaderText">Analizando páginas y verificando fuentes con IA...</span>
+    </div>
+
+    <div id="resultsArea"></div>
+  </main>
+
+  <footer>
+    <span>FideSearch · Proyecto de Investigación</span>
+    <button type="button" id="btnOpenSources">📚 Ver fuentes verificadas</button>
+    <button type="button" id="btnOpenHow">ℹ️ Cómo funciona</button>
+  </footer>
+
+  <!-- MODAL 1: LOGIN / REGISTRO -->
+  <div class="modal-backdrop" id="authModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="authTitle">Accede a tu cuenta</h2>
+        <button class="close-modal" data-close="authModal">✕</button>
+      </div>
+      <div class="filter-tabs" style="margin-bottom:14px;">
+        <button type="button" class="tab-btn active" id="tabLogin">Iniciar sesión</button>
+        <button type="button" class="tab-btn" id="tabRegister">Crear cuenta nueva</button>
+      </div>
+      <form id="authForm">
+        <div class="form-group">
+          <label>Nombre de usuario (solo letras/números)</label>
+          <input type="text" id="authUser" required minlength="3" maxlength="30" placeholder="ej. alex12" />
+        </div>
+        <div class="form-group">
+          <label>Contraseña</label>
+          <input type="password" id="authPass" required minlength="4" placeholder="Mínimo 4 caracteres" />
+        </div>
+        <div class="form-error" id="authError"></div>
+        <button class="pill-btn primary" type="submit" style="width:100%; justify-content:center; padding:11px;">Continuar</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 2: ENTREVISTA DE PERSONALIZACIÓN -->
+  <div class="modal-backdrop" id="quizModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Personaliza tu buscador</h2>
+        <button class="close-modal" data-close="quizModal">✕</button>
+      </div>
+      <div class="quiz-progress"><div class="quiz-progress-bar" id="quizProgressBar" style="width:25%;"></div></div>
+      <div id="quizBody"></div>
+    </div>
+  </div>
+
+  <!-- MODAL 3: MI PERFIL Y LISTA BLANCA PERSONAL -->
+  <div class="modal-backdrop" id="profileModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="profileTitle">Mi perfil</h2>
+        <button class="close-modal" data-close="profileModal">✕</button>
+      </div>
+      <div id="profileSummary" style="font-size:0.88rem; color:var(--text-muted); margin-bottom:14px;"></div>
+      <div style="display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap;">
+        <button class="pill-btn" type="button" id="btnRetakeQuiz">🎯 Repetir entrevista</button>
+        <button class="pill-btn" type="button" id="btnLogout" style="color:var(--filtered-text);">Cerrar sesión</button>
+      </div>
+      <h3 style="font-size:0.95rem; margin-bottom:8px;">★ Tu Lista Blanca Personal</h3>
+      <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:10px;">
+        Las webs que añadas aquí pasarán siempre en Capa 1 con un 100% cuando inicies sesión.
+      </p>
+      <form id="addDomainForm" style="display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap;">
+        <input type="text" id="newDomainInput" placeholder="ej. xataka.com o mit.edu" required style="flex:2; min-width:160px; padding:8px 10px; border-radius:8px; border:1px solid var(--border); background:var(--surface-soft); color:var(--text);" />
+        <input type="text" id="newDomainNote" placeholder="Etiqueta (opcional)" style="flex:1; min-width:110px; padding:8px 10px; border-radius:8px; border:1px solid var(--border); background:var(--surface-soft); color:var(--text);" />
+        <button class="pill-btn primary" type="submit">Añadir</button>
+      </form>
+      <div class="form-error" id="domainError"></div>
+      <div id="personalDomainsList"></div>
+    </div>
+  </div>
+
+  <!-- MODAL 4: FUENTES VERIFICADAS GLOBALES -->
+  <div class="modal-backdrop" id="sourcesModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Fuentes verificadas (Capa 1)</h2>
+        <button class="close-modal" data-close="sourcesModal">✕</button>
+      </div>
+      <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:10px;">
+        Además de cualquier dominio <code>.gob.es</code>, <code>.gov</code> y <code>.edu</code>, FideSearch aprueba directamente estas fuentes:
+      </p>
+      <input type="text" id="filterSourcesInput" placeholder="Buscar dominio o categoría..." style="width:100%; padding:8px 12px; border-radius:8px; border:1px solid var(--border); background:var(--surface-soft); color:var(--text); margin-bottom:12px;" />
+      <div id="globalSourcesList" style="max-height:320px; overflow-y:auto;"></div>
+    </div>
+  </div>
+
+  <!-- MODAL 5: CÓMO FUNCIONA -->
+  <div class="modal-backdrop" id="howModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>¿Cómo funciona FideSearch?</h2>
+        <button class="close-modal" data-close="howModal">✕</button>
+      </div>
+      <div style="font-size:0.9rem; line-height:1.6; color:var(--text-muted);">
+        <p style="margin-bottom:10px;"><strong style="color:var(--text);">1. Capa 1 (Fuentes Verificadas):</strong> Comprueba al instante si la web está en tu lista personal, en la lista global verificada (OMS, CSIC, verificadores IFCN...) o es un dominio oficial (<code>.gob.es</code>, <code>.gov</code>, <code>.edu</code>).</p>
+        <p style="margin-bottom:10px;"><strong style="color:var(--text);">2. Capa 2 (IA propia):</strong> Para el resto de páginas, descarga el artículo completo en paralelo, lo normaliza si está en otro idioma y lo evalúa con un modelo <em>Random Forest</em> (80,26% de exactitud) mostrando los motivos de la puntuación.</p>
+        <p><strong style="color:var(--text);">3. Síntesis y Transparencia:</strong> Extrae las ideas clave únicamente de fuentes fiables y te deja consultar abajo los enlaces ocultados para evitar censura opaca.</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const TRANSLATIONS = {
+      es: {
+        tagline: "Motor de búsqueda filtrado por fuentes verificadas e IA",
+        placeholder: "Busca un tema con fuentes fiables...",
+        search: "Buscar",
+        filters: "⚙️ Filtros",
+        dark: "🌙 Oscuro",
+        light: "☀️ Claro",
+        umbral: "Exigencia mínima IA:",
+        num: "Webs a analizar:",
+        region: "Región de búsqueda",
+        loading: "Analizando páginas y verificando fuentes con IA...",
+        trusted: "fuentes fiables",
+        filtered: "filtradas",
+        noResults: "Ningún resultado superó el filtro actual. Revisa los enlaces ocultados abajo o prueba otra búsqueda.",
+        toggleHidden: (n) => `🛡️ Ver ${n} resultado(s) ocultado(s) por el filtro`,
+        hiddenNote: "Por transparencia, aquí puedes consultar los enlaces que no superaron el umbral o bloquearon la lectura:",
+        chips: [["vacunas gripe", "vacunas gripe efectos secundarios"], ["cambio climático", "cambio climatico informe cientifico"], ["IA en educación", "inteligencia artificial educacion"]]
+      },
+      en: {
+        tagline: "Search engine filtered by verified sources and AI",
+        placeholder: "Search a topic from reliable sources...",
+        search: "Search",
+        filters: "⚙️ Filters",
+        dark: "🌙 Dark",
+        light: "☀️ Light",
+        umbral: "Minimum AI threshold:",
+        num: "Results to analyze:",
+        region: "Search region",
+        loading: "Analyzing pages and verifying sources with AI...",
+        trusted: "trusted sources",
+        filtered: "filtered out",
+        noResults: "No results passed the current threshold. Check the hidden results below or lower the filter.",
+        toggleHidden: (n) => `🛡️ View ${n} filtered result(s)`,
+        hiddenNote: "For transparency, here are the links that did not pass the AI threshold or blocked reading:",
+        chips: [["flu vaccine", "flu vaccine side effects"], ["climate change", "climate change scientific report"], ["AI in education", "artificial intelligence education"]]
+      },
+      ca: {
+        tagline: "Cercador web filtrat per fonts verificades i IA",
+        placeholder: "Cerca un tema amb fonts fiables...",
+        search: "Cercar",
+        filters: "⚙️ Filtres",
+        dark: "🌙 Fosc",
+        light: "☀️ Clar",
+        umbral: "Exigència mínima IA:",
+        num: "Webs a analitzar:",
+        region: "Regió de cerca",
+        loading: "Analitzant pàgines i verificant fonts amb IA...",
+        trusted: "fonts fiables",
+        filtered: "filtrades",
+        noResults: "Cap resultat ha superat el filtre actual. Revisa els enllaços ocultats a sota.",
+        toggleHidden: (n) => `🛡️ Veure ${n} resultat(s) ocultat(s) pel filtre`,
+        hiddenNote: "Per transparència, aquí pots consultar els enllaços que no han superat el llindar:",
+        chips: [["vacunes grip", "vacuna grip efectes secundaris"], ["canvi climàtic", "canvi climatic informe cientific"], ["IA educació", "intel·ligencia artificial educacio"]]
+      },
+      gl: {
+        tagline: "Buscador web filtrado por fontes verificadas e IA",
+        placeholder: "Busca un tema con fontes fiables...",
+        search: "Buscar",
+        filters: "⚙️ Filtros",
+        dark: "🌙 Escuro",
+        light: "☀️ Claro",
+        umbral: "Exixencia mínima IA:",
+        num: "Webs a analizar:",
+        region: "Rexión de busca",
+        loading: "Analizando páxinas e verificando fontes con IA...",
+        trusted: "fontes fiables",
+        filtered: "filtradas",
+        noResults: "Ningún resultado superou o filtro actual. Revisa as ligazóns ocultadas abaixo.",
+        toggleHidden: (n) => `🛡️ Ver ${n} resultado(s) ocultado(s) polo filtro`,
+        hiddenNote: "Por transparencia, aquí podes consultar as ligazóns filtradas:",
+        chips: [["vacinas gripe", "vacina gripe efectos secundarios"], ["cambio climático", "cambio climatico informe cientifico"], ["IA educación", "intelixencia artificial educacion"]]
+      },
+      eu: {
+        tagline: "Iturri egiaztatuen eta AAren bidez iragazitako bilatzailea",
+        placeholder: "Bilatu gai bat iturri fidagarriekin...",
+        search: "Bilatu",
+        filters: "⚙️ Iragazkiak",
+        dark: "🌙 Iluna",
+        light: "☀️ Argia",
+        umbral: "AA gutxieneko maila:",
+        num: "Aztertzeko webak:",
+        region: "Bilaketa-eskualdea",
+        loading: "Orriak aztertzen eta iturriak AArekin egiaztatzen...",
+        trusted: "iturri fidagarri",
+        filtered: "iragaziak",
+        noResults: "Ez du emaitzarik gainditu uneko iragazkia. Begiratu beheko esteka ezkutuak.",
+        toggleHidden: (n) => `🛡️ Ikusi iragazkiak ezkutatutako ${n} emaitza`,
+        hiddenNote: "Gardentasunagatik, hemen kontsulta ditzakezu iragazitako estekak:",
+        chips: [["gripearen txertoa", "gripearen txertoa albo-ondorioak"], ["klima aldaketa", "klima aldaketa txosten zientifikoa"], ["AA hezkuntzan", "adimen artifiziala hezkuntza"]]
+      },
+      fr: {
+        tagline: "Moteur de recherche filtré par sources vérifiées et IA",
+        placeholder: "Recherchez un sujet avec des sources fiables...",
+        search: "Rechercher",
+        filters: "⚙️ Filtres",
+        dark: "🌙 Sombre",
+        light: "☀️ Clair",
+        umbral: "Seuil minimum IA :",
+        num: "Sites à analyser :",
+        region: "Région de recherche",
+        loading: "Analyse des pages et vérification par IA...",
+        trusted: "sources fiables",
+        filtered: "filtrées",
+        noResults: "Aucun résultat n'a passé le filtre actuel.",
+        toggleHidden: (n) => `🛡️ Voir ${n} résultat(s) masqué(s)`,
+        hiddenNote: "Par transparence, voici les liens filtrés :",
+        chips: [["vaccin grippe", "vaccin grippe effets secondaires"], ["changement climatique", "changement climatique rapport scientifique"], ["IA éducation", "intelligence artificielle education"]]
+      },
+      pt: {
+        tagline: "Motor de busca filtrado por fontes verificadas e IA",
+        placeholder: "Pesquise um tema com fontes fiáveis...",
+        search: "Pesquisar",
+        filters: "⚙️ Filtros",
+        dark: "🌙 Escuro",
+        light: "☀️ Claro",
+        umbral: "Exigência mínima IA:",
+        num: "Sites a analisar:",
+        region: "Região de pesquisa",
+        loading: "Analisando páginas e verificando fontes com IA...",
+        trusted: "fontes fiáveis",
+        filtered: "filtradas",
+        noResults: "Nenhum resultado passou pelo filtro atual.",
+        toggleHidden: (n) => `🛡️ Ver ${n} resultado(s) oculto(s)`,
+        hiddenNote: "Por transparência, pode consultar aqui os links filtrados:",
+        chips: [["vacina gripe", "vacina gripe efeitos secundarios"], ["alterações climáticas", "alteracoes climaticas relatorio cientifico"], ["IA educação", "inteligencia artificial educacao"]]
+      },
+      de: {
+        tagline: "Suchmaschine gefiltert nach geprüften Quellen und KI",
+        placeholder: "Thema aus verlässlichen Quellen suchen...",
+        search: "Suchen",
+        filters: "⚙️ Filter",
+        dark: "🌙 Dunkel",
+        light: "☀️ Hell",
+        umbral: "KI-Mindestschwelle:",
+        num: "Zu prüfende Seiten:",
+        region: "Suchregion",
+        loading: "Seiten werden analysiert und per KI geprüft...",
+        trusted: "verlässliche Quellen",
+        filtered: "gefiltert",
+        noResults: "Keine Ergebnisse haben den aktuellen Filter bestanden.",
+        toggleHidden: (n) => `🛡️ ${n} ausgeblendete(s) Ergebnis(se) anzeigen`,
+        hiddenNote: "Aus Transparenzgründen finden Sie hier die gefilterten Links:",
+        chips: [["Grippeimpfung", "Grippeimpfung Nebenwirkungen"], ["Klimawandel", "Klimawandel wissenschaftlicher Bericht"], ["KI Bildung", "Künstliche Intelligenz Bildung"]]
+      },
+      it: {
+        tagline: "Motore di ricerca filtrato per fonti verificate e IA",
+        placeholder: "Cerca un argomento da fonti affidabili...",
+        search: "Cerca",
+        filters: "⚙️ Filtri",
+        dark: "🌙 Scuro",
+        light: "☀️ Chiaro",
+        umbral: "Soglia minima IA:",
+        num: "Siti da analizzare:",
+        region: "Regione di ricerca",
+        loading: "Analisi delle pagine e verifica con IA...",
+        trusted: "fonti affidabili",
+        filtered: "filtrate",
+        noResults: "Nessun risultato ha superato il filtro attuale.",
+        toggleHidden: (n) => `🛡️ Mostra ${n} risultat(i) nascost(i)`,
+        hiddenNote: "Per trasparenza, qui puoi consultare i link esclusi:",
+        chips: [["vaccino influenza", "vaccino influenza effetti collaterali"], ["cambiamento climatico", "cambiamento climatico rapporto scientifico"], ["IA istruzione", "intelligenza artificiale istruzione"]]
+      }
+    };
+
+    const PROFILE_CHIPS = {
+      estudiante: [["Fuentes CSIC", "cambio climatico csic investigacion"], ["Definición RAE", "inteligencia artificial rae"], ["Artículos académicos", "energia renovable ventajas estudio"]],
+      profesional: [["Datos INE", "tasa empleo españa ine"], ["Normativa BOE", "proteccion de datos boe"], ["Informes económicos", "inflacion europa informe"]],
+      investigacion: [["Estudios PubMed/NIH", "vacunas mrna eficacia nih"], ["Informes OMS", "salud mental jovenes oms"], ["Revistas Nature", "inteligencia artificial medicina nature"]],
+      actualidad: [["Verificar bulos", "maldita es bulo vacunas"], ["Agencia EFE", "actualidad ciencia tecnologia efe"], ["Datos clima", "aemet temperaturas record"]]
+    };
+
+    let authToken = localStorage.getItem("fidesearch_token") || null;
+    let currentUser = null;
+    let authMode = "login";
+    let lastSearchData = null;
+    let activeFilterTab = "all";
+    let globalSourcesCache = null;
+
+    const mainContainer = document.getElementById("mainContainer");
+    const searchForm = document.getElementById("searchForm");
+    const queryInput = document.getElementById("queryInput");
+    const searchBtn = document.getElementById("searchBtn");
+    const loader = document.getElementById("loader");
+    const loaderText = document.getElementById("loaderText");
+    const resultsArea = document.getElementById("resultsArea");
+    const btnSettings = document.getElementById("btnSettings");
+    const settingsPanel = document.getElementById("settingsPanel");
+    const btnTheme = document.getElementById("btnTheme");
+    const langSelect = document.getElementById("langSelect");
+    const taglineText = document.getElementById("taglineText");
+    const suggestionsBox = document.getElementById("suggestionsBox");
+    const umbralRange = document.getElementById("umbralRange");
+    const umbralVal = document.getElementById("umbralVal");
+    const umbralTitle = document.getElementById("umbralTitle");
+    const numRange = document.getElementById("numRange");
+    const numVal = document.getElementById("numVal");
+    const numTitle = document.getElementById("numTitle");
+    const regionLabel = document.getElementById("regionLabel");
+    const regionSelect = document.getElementById("regionSelect");
+    const logoBtn = document.getElementById("logoBtn");
+    const authArea = document.getElementById("authArea");
+
+    function escapeHtml(texto) {
+      const div = document.createElement("div");
+      div.textContent = texto ?? "";
+      return div.innerHTML;
+    }
+
+    function safeUrl(url) {
+      return typeof url === "string" && (url.startsWith("http://") || url.startsWith("https://")) ? escapeHtml(url) : "#";
+    }
+
+    function openModal(id) { document.getElementById(id).classList.add("open"); }
+    function closeModal(id) { document.getElementById(id).classList.remove("open"); }
+
+    document.querySelectorAll(".close-modal").forEach((btn) => {
+      btn.addEventListener("click", () => closeModal(btn.dataset.close));
+    });
+    document.querySelectorAll(".modal-backdrop").forEach((bg) => {
+      bg.addEventListener("click", (e) => { if (e.target === bg) bg.classList.remove("open"); });
+    });
+
+    function t() { return TRANSLATIONS[langSelect.value] || TRANSLATIONS.es; }
+
+    function renderChips() {
+      const tr = t();
+      const chips = (currentUser && currentUser.entrevista_completada && langSelect.value === "es" && PROFILE_CHIPS[currentUser.perfil])
+        ? PROFILE_CHIPS[currentUser.perfil]
+        : tr.chips;
+      suggestionsBox.innerHTML = "";
+      chips.forEach(([label, query]) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "chip";
+        btn.textContent = label;
+        btn.addEventListener("click", () => { queryInput.value = query; ejecutarBusqueda(); });
+        suggestionsBox.appendChild(btn);
+      });
+    }
+
+    function aplicarIdioma(codigo) {
+      const tr = TRANSLATIONS[codigo] || TRANSLATIONS.es;
+      document.documentElement.lang = codigo;
+      localStorage.setItem("fidesearch_lang", codigo);
+      taglineText.textContent = tr.tagline;
+      queryInput.placeholder = tr.placeholder;
+      searchBtn.textContent = tr.search;
+      btnSettings.textContent = tr.filters;
+      loaderText.textContent = tr.loading;
+      regionLabel.textContent = tr.region;
+      umbralTitle.textContent = tr.umbral;
+      numTitle.textContent = tr.num;
+      const temaActual = document.documentElement.getAttribute("data-theme") || "light";
+      btnTheme.textContent = temaActual === "dark" ? tr.light : tr.dark;
+      renderChips();
+    }
+
+    function aplicarTema(tema) {
+      document.documentElement.setAttribute("data-theme", tema);
+      const tr = t();
+      btnTheme.textContent = tema === "dark" ? tr.light : tr.dark;
+      localStorage.setItem("fidesearch_theme", tema);
+    }
+
+    // Gestión de sesión y UI de usuario
+    function actualizarUIUsuario() {
+      if (currentUser) {
+        authArea.innerHTML = `
+          <button class="pill-btn" id="btnMyProfile" type="button">👤 @${escapeHtml(currentUser.username)} (${escapeHtml(currentUser.perfil)})</button>
+          <button class="pill-btn" id="btnQuickList" type="button">★ Mi lista (${currentUser.lista_personal.length})</button>
+        `;
+        document.getElementById("btnMyProfile").addEventListener("click", abrirModalPerfil);
+        document.getElementById("btnQuickList").addEventListener("click", abrirModalPerfil);
+        umbralRange.value = currentUser.umbral_defecto || 55;
+        umbralVal.textContent = `${umbralRange.value}%`;
+      } else {
+        authArea.innerHTML = `<button class="pill-btn primary" id="btnOpenAuth" type="button">👤 Iniciar sesión / Personalizar</button>`;
+        document.getElementById("btnOpenAuth").addEventListener("click", () => openModal("authModal"));
+      }
+      renderChips();
+    }
+
+    async function verificarSesionInicial() {
+      if (!authToken) { actualizarUIUsuario(); return; }
+      try {
+        const resp = await fetch("/api/auth/me", { headers: { Authorization: `Bearer ${authToken}` } });
+        if (!resp.ok) throw new Error();
+        const data = await resp.json();
+        currentUser = data.usuario;
+      } catch {
+        authToken = null;
+        currentUser = null;
+        localStorage.removeItem("fidesearch_token");
+      }
+      actualizarUIUsuario();
+    }
+
+    // Login / Registro
+    const tabLogin = document.getElementById("tabLogin");
+    const tabRegister = document.getElementById("tabRegister");
+    tabLogin.addEventListener("click", () => {
+      authMode = "login";
+      tabLogin.classList.add("active");
+      tabRegister.classList.remove("active");
+      document.getElementById("authTitle").textContent = "Accede a tu cuenta";
+    });
+    tabRegister.addEventListener("click", () => {
+      authMode = "register";
+      tabRegister.classList.add("active");
+      tabLogin.classList.remove("active");
+      document.getElementById("authTitle").textContent = "Crea tu cuenta";
+    });
+
+    document.getElementById("authForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const errEl = document.getElementById("authError");
+      errEl.textContent = "";
+      const username = document.getElementById("authUser").value.trim();
+      const password = document.getElementById("authPass").value;
+      const url = authMode === "register" ? "/api/auth/register" : "/api/auth/login";
+      try {
+        const resp = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, password }),
+        });
+        const data = await resp.json();
+        if (!resp.ok) throw new Error(data.detail || "Error de autenticación.");
+        authToken = data.token;
+        currentUser = data.usuario;
+        localStorage.setItem("fidesearch_token", authToken);
+        closeModal("authModal");
+        actualizarUIUsuario();
+        if (!currentUser.entrevista_completada) {
+          iniciarEntrevista();
+        }
+      } catch (err) {
+        errEl.textContent = err.message;
+      }
+    });
+
+    // Entrevista de personalización (4 pasos)
+    let quizData = { perfil: "estudiante", temas: [], umbral: 55 };
+    let quizStep = 1;
+
+    function iniciarEntrevista() {
+      quizStep = 1;
+      quizData = {
+        perfil: currentUser?.perfil && currentUser.perfil !== "general" ? currentUser.perfil : "estudiante",
+        temas: [...(currentUser?.temas || [])],
+        umbral: currentUser?.umbral_defecto || 55,
+      };
+      renderQuizStep();
+      openModal("quizModal");
+    }
+
+    function renderQuizStep() {
+      const body = document.getElementById("quizBody");
+      const bar = document.getElementById("quizProgressBar");
+      bar.style.width = `${quizStep * 25}%`;
+
+      if (quizStep === 1) {
+        const perfiles = [
+          ["estudiante", "🎓 Estudiante", "Prioriza fuentes académicas, CSIC, RAE y enciclopedias."],
+          ["profesional", "💼 Trabajo / Profesional", "Prioriza datos oficiales (INE, BOE) y agencias serias."],
+          ["investigacion", "🔬 Ciencia y Salud", "Prioriza revistas científicas (Nature, Lancet) y OMS/NIH."],
+          ["actualidad", "📰 Actualidad anti-bulos", "Prioriza verificadores (Maldita, Newtral) y prensa pública."]
+        ];
+        body.innerHTML = `
+          <p style="font-size:0.95rem; font-weight:600;">1/4 · ¿Para qué vas a usar principalmente FideSearch?</p>
+          <div class="option-grid">
+            ${perfiles.map(([id, title, desc]) => `
+              <button type="button" class="option-card ${quizData.perfil === id ? "selected" : ""}" data-val="${id}">
+                <strong>${title}</strong><span>${desc}</span>
+              </button>
+            `).join("")}
+          </div>
+          <button class="pill-btn primary" type="button" id="quizNext" style="width:100%; justify-content:center; padding:10px;">Siguiente →</button>
+        `;
+        body.querySelectorAll(".option-card").forEach((c) => {
+          c.addEventListener("click", () => { quizData.perfil = c.dataset.val; renderQuizStep(); });
+        });
+        document.getElementById("quizNext").addEventListener("click", () => { quizStep = 2; renderQuizStep(); });
+      } else if (quizStep === 2) {
+        const temasLista = ["Ciencia", "Salud", "Tecnología", "Educación", "Economía y Leyes", "Actualidad"];
+        body.innerHTML = `
+          <p style="font-size:0.95rem; font-weight:600; margin-bottom:10px;">2/4 · ¿Qué temas sueles buscar más? (elige varios)</p>
+          <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:20px;">
+            ${temasLista.map((tItem) => {
+              const sel = quizData.temas.includes(tItem);
+              return `<button type="button" class="tab-btn ${sel ? "active" : ""}" data-tema="${tItem}">${tItem}</button>`;
+            }).join("")}
+          </div>
+          <div style="display:flex; gap:10px;">
+            <button class="pill-btn" type="button" id="quizPrev">← Atrás</button>
+            <button class="pill-btn primary" type="button" id="quizNext" style="flex:1; justify-content:center;">Siguiente →</button>
+          </div>
+        `;
+        body.querySelectorAll("[data-tema]").forEach((b) => {
+          b.addEventListener("click", () => {
+            const val = b.dataset.tema;
+            if (quizData.temas.includes(val)) quizData.temas = quizData.temas.filter((x) => x !== val);
+            else quizData.temas.push(val);
+            renderQuizStep();
+          });
+        });
+        document.getElementById("quizPrev").addEventListener("click", () => { quizStep = 1; renderQuizStep(); });
+        document.getElementById("quizNext").addEventListener("click", () => { quizStep = 3; renderQuizStep(); });
+      } else if (quizStep === 3) {
+        const niveles = [
+          [70, "🛡️ Estricto (70%)", "Solo deja pasar páginas con redacción muy rigurosa."],
+          [55, "⚖️ Equilibrado (55%)", "Buen balance entre seguridad y variedad de resultados."],
+          [45, "🌐 Flexible (45%)", "Muestra más resultados filtrando solo lo muy dudoso."]
+        ];
+        body.innerHTML = `
+          <p style="font-size:0.95rem; font-weight:600; margin-bottom:10px;">3/4 · ¿Qué nivel de exigencia prefieres para la IA?</p>
+          <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:18px;">
+            ${niveles.map(([val, title, desc]) => `
+              <button type="button" class="option-card ${quizData.umbral === val ? "selected" : ""}" data-u="${val}">
+                <strong>${title}</strong><span>${desc}</span>
+              </button>
+            `).join("")}
+          </div>
+          <div style="display:flex; gap:10px;">
+            <button class="pill-btn" type="button" id="quizPrev">← Atrás</button>
+            <button class="pill-btn primary" type="button" id="quizNext" style="flex:1; justify-content:center;">Siguiente →</button>
+          </div>
+        `;
+        body.querySelectorAll("[data-u]").forEach((c) => {
+          c.addEventListener("click", () => { quizData.umbral = Number(c.dataset.u); renderQuizStep(); });
+        });
+        document.getElementById("quizPrev").addEventListener("click", () => { quizStep = 2; renderQuizStep(); });
+        document.getElementById("quizNext").addEventListener("click", () => { quizStep = 4; renderQuizStep(); });
+      } else {
+        body.innerHTML = `
+          <p style="font-size:0.95rem; font-weight:600; margin-bottom:6px;">4/4 · ¿Quieres añadir ya una web a tu lista blanca?</p>
+          <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:12px;">Opcional: por ejemplo, la web de tu universidad o un medio en el que confíes. Siempre podrás editarlo en "Mi lista".</p>
+          <div class="form-group">
+            <input type="text" id="quizExtraDomain" placeholder="ej. mit.edu o xataka.com (opcional)" />
+          </div>
+          <div style="display:flex; gap:10px;">
+            <button class="pill-btn" type="button" id="quizPrev">← Atrás</button>
+            <button class="pill-btn primary" type="button" id="quizFinish" style="flex:1; justify-content:center;">Guardar y empezar 🚀</button>
+          </div>
+        `;
+        document.getElementById("quizPrev").addEventListener("click", () => { quizStep = 3; renderQuizStep(); });
+        document.getElementById("quizFinish").addEventListener("click", async () => {
+          const extra = document.getElementById("quizExtraDomain").value.trim();
+          const resp = await fetch("/api/perfil", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
+            body: JSON.stringify({ perfil: quizData.perfil, temas: quizData.temas, umbral_defecto: quizData.umbral }),
+          });
+          if (resp.ok) {
+            const d = await resp.json();
+            currentUser = d.usuario;
+          }
+          if (extra) {
+            const r2 = await fetch("/api/mi-lista", {
+              method: "POST",
+              headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
+              body: JSON.stringify({ dominio: extra, nota: "Añadida en entrevista" }),
+            });
+            if (r2.ok) {
+              const d2 = await r2.json();
+              currentUser = d2.usuario;
+            }
+          }
+          closeModal("quizModal");
+          actualizarUIUsuario();
+        });
+      }
+    }
+
+    // Modal Perfil y Lista Personal
+    function abrirModalPerfil() {
+      if (!currentUser) return;
+      document.getElementById("profileTitle").textContent = `Perfil de @${currentUser.username}`;
+      const temasTxt = currentUser.temas.length ? currentUser.temas.join(", ") : "Sin especificar";
+      document.getElementById("profileSummary").innerHTML = `
+        <strong>Modo:</strong> ${escapeHtml(currentUser.perfil)} · <strong>Temas:</strong> ${escapeHtml(temasTxt)} · <strong>Umbral:</strong> ${currentUser.umbral_defecto}%
+      `;
+      renderPersonalDomains();
+      openModal("profileModal");
+    }
+
+    function renderPersonalDomains() {
+      const box = document.getElementById("personalDomainsList");
+      if (!currentUser || currentUser.lista_personal.length === 0) {
+        box.innerHTML = `<p style="font-size:0.82rem; color:var(--text-muted);">Todavía no has añadido webs a tu lista personal.</p>`;
+        return;
+      }
+      box.innerHTML = "";
+      currentUser.lista_personal.forEach((d) => {
+        const row = document.createElement("div");
+        row.className = "domain-row";
+        row.innerHTML = `<span>★ <strong>${escapeHtml(d.dominio)}</strong> ${d.nota ? `· ${escapeHtml(d.nota)}` : ""}</span>`;
+        const del = document.createElement("button");
+        del.type = "button";
+        del.className = "del-btn";
+        del.textContent = "Quitar";
+        del.addEventListener("click", async () => {
+          const resp = await fetch(`/api/mi-lista/${encodeURIComponent(d.dominio)}`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${authToken}` },
+          });
+          if (resp.ok) {
+            const data = await resp.json();
+            currentUser = data.usuario;
+            renderPersonalDomains();
+            actualizarUIUsuario();
+          }
+        });
+        row.appendChild(del);
+        box.appendChild(row);
+      });
+    }
+
+    document.getElementById("addDomainForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const errEl = document.getElementById("domainError");
+      errEl.textContent = "";
+      const dominio = document.getElementById("newDomainInput").value.trim();
+      const nota = document.getElementById("newDomainNote").value.trim();
+      try {
+        const resp = await fetch("/api/mi-lista", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
+          body: JSON.stringify({ dominio, nota }),
+        });
+        const data = await resp.json();
+        if (!resp.ok) throw new Error(data.detail || "No se pudo añadir.");
+        currentUser = data.usuario;
+        document.getElementById("newDomainInput").value = "";
+        document.getElementById("newDomainNote").value = "";
+        renderPersonalDomains();
+        actualizarUIUsuario();
+      } catch (err) {
+        errEl.textContent = err.message;
+      }
+    });
+
+    document.getElementById("btnRetakeQuiz").addEventListener("click", () => {
+      closeModal("profileModal");
+      iniciarEntrevista();
+    });
+
+    document.getElementById("btnLogout").addEventListener("click", async () => {
+      if (authToken) {
+        fetch("/api/auth/logout", { method: "POST", headers: { Authorization: `Bearer ${authToken}` } }).catch(() => {});
+      }
+      authToken = null;
+      currentUser = null;
+      localStorage.removeItem("fidesearch_token");
+      closeModal("profileModal");
+      actualizarUIUsuario();
+    });
+
+    // Modales informativos
+    document.getElementById("btnOpenHow").addEventListener("click", () => openModal("howModal"));
+    document.getElementById("btnOpenSources").addEventListener("click", async () => {
+      openModal("sourcesModal");
+      if (!globalSourcesCache) {
+        const resp = await fetch("/api/fuentes-globales");
+        const data = await resp.json();
+        globalSourcesCache = data.fuentes || [];
+      }
+      renderGlobalSources("");
+    });
+    document.getElementById("filterSourcesInput").addEventListener("input", (e) => {
+      renderGlobalSources(e.target.value.trim().toLowerCase());
+    });
+
+    function renderGlobalSources(filtro) {
+      const box = document.getElementById("globalSourcesList");
+      const filtradas = (globalSourcesCache || []).filter(
+        (f) => f.dominio.includes(filtro) || f.categoria.toLowerCase().includes(filtro)
+      );
+      box.innerHTML = filtradas.map((f) => `
+        <div class="domain-row">
+          <span><strong>${escapeHtml(f.dominio)}</strong></span>
+          <span style="color:var(--text-muted); font-size:0.78rem;">${escapeHtml(f.categoria)}</span>
+        </div>
+      `).join("");
+    }
+
+    // Búsqueda y renderizado
+    async function ejecutarBusqueda() {
+      const q = queryInput.value.trim();
+      if (!q) return;
+
+      mainContainer.classList.remove("landing");
+      settingsPanel.classList.remove("open");
+      resultsArea.innerHTML = "";
+      loader.classList.add("active");
+      searchBtn.disabled = true;
+      activeFilterTab = "all";
+
+      try {
+        const params = new URLSearchParams({
+          q,
+          umbral: umbralRange.value,
+          num: numRange.value,
+          region: regionSelect.value,
+          idioma: langSelect.value,
+        });
+        const headers = authToken ? { Authorization: `Bearer ${authToken}` } : {};
+        const resp = await fetch(`/api/buscar?${params.toString()}`, { headers });
+        const data = await resp.json();
+        if (!resp.ok) throw new Error(data.detail || "Error al realizar la búsqueda.");
+        lastSearchData = data;
+        renderResultados();
+      } catch (err) {
+        resultsArea.innerHTML = `<div class="empty-msg">⚠️ ${escapeHtml(err.message)}</div>`;
+      } finally {
+        loader.classList.remove("active");
+        searchBtn.disabled = false;
+      }
+    }
+
+    function renderResultados() {
+      if (!lastSearchData) return;
+      const tr = t();
+      const { aprobados, ocultos, sintesis, tiempo } = lastSearchData;
+
+      let html = "";
+
+      // 1. Síntesis verificada con citas
+      if (sintesis && sintesis.length > 0) {
+        html += `<div class="synthesis-box"><div class="synthesis-title">✦ Síntesis de fuentes verificadas</div>`;
+        sintesis.forEach((s) => {
+          html += `
+            <div class="synthesis-item">
+              ${escapeHtml(s.texto)}
+              <a class="cite-pill" href="${safeUrl(s.url)}" target="_blank" rel="noopener noreferrer">[${s.cita}] ${escapeHtml(s.dominio)}</a>
+            </div>
+          `;
+        });
+        html += `</div>`;
+      }
+
+      html += `
+        <div class="stats-bar">
+          <span>✅ <strong>${aprobados.length}</strong> ${escapeHtml(tr.trusted)}</span>
+          <span>·</span>
+          <span>🛡️ <strong>${ocultos.length}</strong> ${escapeHtml(tr.filtered)}</span>
+          <span>·</span>
+          <span>⏱️ ${tiempo} s</span>
+        </div>
+      `;
+
+      // 2. Pestañas de filtro rápido
+      const hayPersonal = aprobados.some((r) => r.es_personal);
+      const hayPerfil = aprobados.some((r) => r.recomendado_perfil);
+      html += `<div class="filter-tabs">`;
+      html += `<button type="button" class="tab-btn ${activeFilterTab === "all" ? "active" : ""}" data-tab="all">Todos (${aprobados.length})</button>`;
+      html += `<button type="button" class="tab-btn ${activeFilterTab === "verified" ? "active" : ""}" data-tab="verified">🏛️ Solo 100% Verificadas</button>`;
+      if (hayPersonal) html += `<button type="button" class="tab-btn ${activeFilterTab === "personal" ? "active" : ""}" data-tab="personal">★ Mi Lista Personal</button>`;
+      if (hayPerfil) html += `<button type="button" class="tab-btn ${activeFilterTab === "profile" ? "active" : ""}" data-tab="profile">🎯 Para tu perfil</button>`;
+      html += `</div>`;
+
+      const visibles = aprobados.filter((r) => {
+        if (activeFilterTab === "verified") return r.fiabilidad === 1.0;
+        if (activeFilterTab === "personal") return r.es_personal;
+        if (activeFilterTab === "profile") return r.recomendado_perfil;
+        return true;
+      });
+
+      if (visibles.length === 0) {
+        html += `<div class="empty-msg">${escapeHtml(tr.noResults)}</div>`;
+      } else {
+        visibles.forEach((r, idx) => {
+          const pct = Math.round((r.fiabilidad ?? 0) * 100);
+          let badgePrincipal = "";
+          if (r.es_personal) {
+            badgePrincipal = `<span class="badge personal">★ Tu Lista Personal · 100%</span>`;
+          } else if (r.fiabilidad === 1.0 && (r.metodo.includes("Lista Verificada") || r.metodo.includes("Dominio Institucional"))) {
+            badgePrincipal = `<span class="badge verified">✓ ${escapeHtml(r.metodo)} · 100%</span>`;
+          } else {
+            badgePrincipal = `<span class="badge ai">✦ ${escapeHtml(r.metodo)} · ${pct}%</span>`;
+          }
+          const badgePerfil = r.recomendado_perfil ? `<span class="badge profile">🎯 Recomendada para tu perfil</span>` : "";
+          const favicon = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(r.dominio)}&sz=32`;
+          const xai = r.xai || {};
+          const kws = (xai.palabras_clave || []).map((k) => `<span class="xai-kw">${escapeHtml(k)}</span>`).join("");
+
+          html += `
+            <article class="card">
+              <div class="card-domain">
+                <img src="${favicon}" alt="" onerror="this.style.display='none'" />
+                <span>${escapeHtml(r.dominio)}</span>
+              </div>
+              <div class="card-title">
+                <a href="${safeUrl(r.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(r.titulo)}</a>
+              </div>
+              <div class="card-snippet">${escapeHtml(r.resumen)}</div>
+              <div class="card-footer">
+                <div class="badges-wrap">${badgePrincipal}${badgePerfil}</div>
+                <button type="button" class="xai-btn" data-xai="xai-${idx}">🔍 Ver análisis</button>
+              </div>
+              <div class="xai-box" id="xai-${idx}">
+                <div class="xai-signals">
+                  ${xai.score_ml !== undefined && r.fiabilidad !== 1.0 ? `<span class="xai-sig">🤖 Modelo ML: ${Math.round(xai.score_ml * 100)}%</span>` : ""}
+                  ${xai.score_craap !== undefined && r.fiabilidad !== 1.0 ? `<span class="xai-sig">📋 Test CRAAP: ${Math.round(xai.score_craap * 100)}%</span>` : ""}
+                  <span class="xai-sig">${xai.https ? "✅ HTTPS seguro" : "⚠️ Sin HTTPS"}</span>
+                  <span class="xai-sig">${xai.tono_sobrio ? "✅ Tono sobrio" : "⚠️ Tono sensacionalista"}</span>
+                  <span class="xai-sig">${xai.aporta_datos ? "✅ Aporta cifras/fechas" : "ℹ️ Sin cifras"}</span>
+                  ${xai.autor ? `<span class="xai-sig">✍️ ${escapeHtml(xai.autor)}</span>` : ""}
+                  ${xai.fecha ? `<span class="xai-sig">📅 ${escapeHtml(xai.fecha)}</span>` : ""}
+                  ${xai.enlaces_externos ? `<span class="xai-sig">🔗 ${xai.enlaces_externos} fuentes ext.${xai.citas_fiables ? " (citas oficiales)" : ""}</span>` : ""}
+                  ${r.palabras_analizadas ? `<span class="xai-sig">📄 ${r.palabras_analizadas} palabras</span>` : ""}
+                </div>
+                ${kws ? `<div><strong>Términos clave detectados por tu IA:</strong> ${kws}</div>` : ""}
+              </div>
+            </article>
+          `;
+        });
+      }
+
+      if (ocultos.length > 0) {
+        html += `
+          <div class="transparency-box">
+            <button class="transparency-toggle" type="button" id="toggleHidden">
+              <span>${escapeHtml(tr.toggleHidden(ocultos.length))}</span>
+              <span>▾</span>
+            </button>
+            <div class="transparency-list" id="hiddenList">
+              <p class="transparency-note">${escapeHtml(tr.hiddenNote)}</p>
+        `;
+        ocultos.forEach((r) => {
+          const pct = r.fiabilidad === null ? 0 : Math.round(r.fiabilidad * 100);
+          html += `
+            <div class="card" style="opacity:0.85;">
+              <div class="card-domain"><span>🌐 ${escapeHtml(r.dominio)}</span></div>
+              <div class="card-title"><a href="${safeUrl(r.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(r.titulo)}</a></div>
+              <span class="badge filtered">✕ ${escapeHtml(r.metodo)} · ${pct}% (${r.palabras_analizadas ?? 0} palabras)</span>
+            </div>
+          `;
+        });
+        html += `</div></div>`;
+      }
+
+      resultsArea.innerHTML = html;
+
+      resultsArea.querySelectorAll("[data-tab]").forEach((btn) => {
+        btn.addEventListener("click", () => { activeFilterTab = btn.dataset.tab; renderResultados(); });
+      });
+      resultsArea.querySelectorAll("[data-xai]").forEach((btn) => {
+        btn.addEventListener("click", () => { document.getElementById(btn.dataset.xai).classList.toggle("open"); });
+      });
+      const toggleHidden = document.getElementById("toggleHidden");
+      if (toggleHidden) {
+        toggleHidden.addEventListener("click", () => document.getElementById("hiddenList").classList.toggle("open"));
+      }
+    }
+
+    // Inicialización
+    const idiomaGuardado = localStorage.getItem("fidesearch_lang") || "es";
+    langSelect.value = TRANSLATIONS[idiomaGuardado] ? idiomaGuardado : "es";
+    aplicarTema(localStorage.getItem("fidesearch_theme") || "light");
+    aplicarIdioma(langSelect.value);
+    verificarSesionInicial();
+
+    langSelect.addEventListener("change", () => aplicarIdioma(langSelect.value));
+    btnTheme.addEventListener("click", () => {
+      const actual = document.documentElement.getAttribute("data-theme");
+      aplicarTema(actual === "dark" ? "light" : "dark");
+    });
+    btnSettings.addEventListener("click", () => settingsPanel.classList.toggle("open"));
+    umbralRange.addEventListener("input", () => { umbralVal.textContent = `${umbralRange.value}%`; });
+    numRange.addEventListener("input", () => { numVal.textContent = numRange.value; });
+    logoBtn.addEventListener("click", () => {
+      mainContainer.classList.add("landing");
+      resultsArea.innerHTML = "";
+      queryInput.value = "";
+      queryInput.focus();
+    });
+    searchForm.addEventListener("submit", (e) => { e.preventDefault(); ejecutarBusqueda(); });
+  </script>
+</body>
+</html>
